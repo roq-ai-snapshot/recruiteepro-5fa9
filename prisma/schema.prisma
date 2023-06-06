@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model business_organization {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String        @db.VarChar(255)
+  user_id     String        @db.Uuid
+  user        user          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_opening job_opening[]
+  report      report[]
+  workflow    workflow[]
+}
+
+model interview {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_application_id String          @db.Uuid
+  interviewer_id     String          @db.Uuid
+  date_time          DateTime        @db.Timestamp(6)
+  feedback           String?
+  user               user            @relation(fields: [interviewer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_application    job_application @relation(fields: [job_application_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model job_application {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_opening_id String      @db.Uuid
+  applicant_id   String      @db.Uuid
+  resume         String
+  status         String      @db.VarChar(255)
+  interview      interview[]
+  user           user        @relation(fields: [applicant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_opening    job_opening @relation(fields: [job_opening_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model job_opening {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                    String                @db.VarChar(255)
+  description              String
+  business_organization_id String                @db.Uuid
+  job_application          job_application[]
+  business_organization    business_organization @relation(fields: [business_organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  workflow                 workflow[]
+}
+
+model report {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_organization_id String                @db.Uuid
+  report_data              String
+  date_generated           DateTime              @db.Timestamp(6)
+  business_organization    business_organization @relation(fields: [business_organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String                  @unique @db.VarChar(255)
+  firstName             String?                 @db.VarChar(255)
+  lastName              String?                 @db.VarChar(255)
+  roq_user_id           String                  @db.VarChar(255)
+  tenant_id             String                  @db.VarChar(255)
+  business_organization business_organization[]
+  interview             interview[]
+  job_application       job_application[]
+}
+
+model workflow {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_organization_id String                @db.Uuid
+  job_opening_id           String                @db.Uuid
+  step_name                String                @db.VarChar(255)
+  step_order               Int
+  business_organization    business_organization @relation(fields: [business_organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_opening              job_opening           @relation(fields: [job_opening_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
